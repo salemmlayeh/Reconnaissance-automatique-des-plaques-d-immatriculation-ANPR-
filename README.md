@@ -28,3 +28,8 @@ Real-time Detection: Continuous video stream processing.
 Image Optimization: Advanced preprocessing (grayscale conversion, blurring, and thresholding) via OpenCV to improve OCR results.
 
 Character Extraction: Automated segmentation of alphanumeric characters.
+
+images:
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/8f16d411-c0a5-45ee-9d9b-982d7d29f20e" />
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/029b9db8-8344-4672-bbe0-77d6bb6a8d31" />
+
