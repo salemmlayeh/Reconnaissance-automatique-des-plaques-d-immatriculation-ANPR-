@@ -1,87 +1,67 @@
-🚗 Embedded ANPR System on Raspberry Pi 3
-An embedded Automatic Number Plate Recognition (ANPR) system built for edge deployment on a Raspberry Pi 3[cite: 1]. This project combines classical computer vision with deep learning to achieve real-time plate detection and text extraction with over 92% accuracy[cite: 1].
+# 🚗 System Description & Project Architecture
 
-📌 Overview
-This project implements an end-to-end vision pipeline capable of detecting license plates from camera/image inputs and extracting text under varying lighting and environmental conditions.
+## 📌 Project Overview
 
-┌─────────────────┐     ┌───────────────────────┐     ┌─────────────────────────┐     ┌─────────────────┐
-│  Image Input    │ ──► │  OpenCV Preprocessing │ ──► │ PyTorch Plate Detection │ ──► │ ROI Extraction  │
-└─────────────────┘     └───────────────────────┘     └─────────────────────────┘     └────────┬────────┘
-                                                                                               │
-                                                                                               ▼
-┌─────────────────┐     ┌───────────────────────┐                                     ┌─────────────────┐
-│ Final Text Result│ ◄── │ Regex Post-Processing │ ◄────────────────────────────────── │  Tesseract OCR  │
-└─────────────────┘     └───────────────────────┘                                     └─────────────────┘
-✨ Key Features
-Embedded Deployment: Designed and optimized specifically for constrained hardware (Raspberry Pi 3 / ARM Cortex-A53)[cite: 1].
+This project implements an **Automatic Number Plate Recognition (ANPR)** system optimized for edge execution on a **Raspberry Pi 3**. The system processes incoming visual data (images or video streams), detects the presence of vehicle license plates using deep learning, isolates the plate region, and extracts the alphanumeric characters with an accuracy rate exceeding **92%**.
 
-Deep Learning Localizer: High-precision plate detection powered by PyTorch[cite: 1].
+---
 
-Image Preprocessing: Advanced noise reduction, adaptive thresholding, and perspective correction via OpenCV[cite: 1].
+## ⚙️ Detailed Execution Pipeline
 
-Robust OCR: Character extraction using Tesseract OCR with custom regex filtering for standard plate formats[cite: 1].
+The processing pipeline is divided into four main sequential stages:
 
-High Performance: Evaluated on test datasets achieving > 92% recognition accuracy[cite: 1].
+### 1. Image Acquisition & Preprocessing (`OpenCV`)
 
-🛠️ Tech Stack & Dependencies
-Hardware: Raspberry Pi 3 Model B (Raspbian / Raspberry Pi OS)[cite: 1]
+* **Frame Capture & Resizing:** Downsamples raw input frames from the camera to a standard resolution to minimize CPU computational overhead on the Raspberry Pi 3.
 
-Languages: Python 3.8+[cite: 1]
 
-Deep Learning Framework: PyTorch[cite: 1]
+* **Grayscale Conversion:** Converts RGB images to single-channel grayscale to reduce memory footprint and simplify pixel intensity calculations.
+* **Noise Reduction & Edge Enhancement:** Applies a bilateral filter to smooth out background noise while preserving sharp boundaries around text and license plate borders.
 
-Computer Vision: OpenCV[cite: 1]
+### 2. License Plate Localization (`PyTorch`)
 
-OCR Engine: Tesseract OCR (pytesseract)[cite: 1]
+* **Deep Learning Inference:** Passes the preprocessed frame through a lightweight object detection model (e.g., custom CNN or optimized YOLO variant) running on **PyTorch**.
 
-Data Manipulation: NumPy, Pandas
 
-🚀 Getting Started
-Prerequisites
-Update your System and install system-level dependencies on your Raspberry Pi:
+* **Bounding Box Generation:** The model predicts spatial coordinates bounding the license plate region within the full image frame.
+* **Region of Interest (ROI) Extraction:** Crops the detected bounding box containing the license plate for isolated processing.
 
-Bash
-sudo apt-get update && sudo apt-get upgrade -y
-sudo apt-get install -y build-essential cmake pkg-config
-sudo apt-get install -y libjpeg-dev libtiff5-dev libjasper-dev libpng-dev
-sudo apt-get install -y libavcodec-dev libavformat-dev libswscale-dev libv4l-dev
-sudo apt-get install -y libxvidcore-dev libx264-dev
-sudo apt-get install -y tesseract-ocr libtesseract-dev
-Installation
-Clone the Repository:
+### 3. ROI Normalization & Character Binarization (`OpenCV`)
 
-Bash
-git clone https://github.com/salemmlayeh/anpr-raspberry-pi.git
-cd anpr-raspberry-pi
-Create a Virtual Environment & Activate:
+* **Perspective & Alignment Correction:** Adjusts skewed or angled plates to obtain a horizontal orientation.
+* **Adaptive Thresholding:** Applies Otsu’s binarization to separate foreground text characters from the plate background under uneven lighting or shadows.
+* **Morphological Operations:** Performs dilation and erosion to connect broken character contours and eliminate residual background artifacts.
 
-Bash
-python3 -m venv venv
-source venv/bin/activate
-Install Python Packages:
+### 4. Optical Character Recognition & Filtering (`Tesseract OCR`)
 
-Bash
-pip install -r requirements.txt
-💻 Usage
-1. Run Detection on Single Image / Test Set
-Bash
-python main.py --input data/sample_car.jpg --save-output
-2. Run Real-Time Stream (Pi Camera or USB Webcam)
-Bash
-python main.py --source webcam
-📊 Pipeline Explanation
-Preprocessing (src/preprocessing.py): Converts frame to grayscale, applies bilateral filtering to smooth noise while preserving edges, and resizes image for optimal inference speed.
+* **Text Extraction:** Feeds the normalized binary ROI into the **Tesseract OCR** engine.
 
-Detection (src/detector.py): Runs PyTorch object detection model to locate the bounding box surrounding the license plate[cite: 1].
 
-Segmentation & Binarization (src/segmentation.py): Crops the region of interest (ROI) and applies Otsu/Adaptive Thresholding to highlight characters.
+* **Pattern Validation:** Applies regular expression (Regex) pattern matching to validate the recognized text against standard license plate formats and filter out noise characters.
+* **Output Generation:** Displays or logs the identified registration string along with the confidence score.
 
-Text Extraction (src/ocr.py): Tesseract extracts character strings which are validated using regular expressions[cite: 1].
+---
 
-📈 Performance & Results
-Overall Accuracy: > 92% across test datasets under diverse lighting conditions[cite: 1].
+## 📊 Technical Challenges & Hardware Optimizations
 
-Target Hardware: Raspberry Pi 3[cite: 1]
+* **Memory Management:** Streamlined tensor operations in **PyTorch** and explicitly freed unused buffers in memory to prevent memory saturation on the Raspberry Pi 3's 1 GB RAM.
+
+
+* **Latency Reduction:** Separated plate localization (Deep Learning) from text recognition (OCR) to maintain low execution latency per frame on a quad-core ARM processor.
+
+
+* **Environmental Robustness:** Optimized preprocessing filters to handle varying outdoor conditions, including low contrast, headlight glare, and inclined angles.
+
+
+
+---
+
+## 🎯 Results & Evaluation
+
+* **Overall Recognition Rate:** > 92% accurate character identification across test datasets.
+
+
+* **Target Environment:** Embedded Linux (Raspberry Pi OS) on ARM Cortex-A53 architecture.
 
 Inference Optimization: Reduced input tensor sizes and optimized image transforms to maintain low execution latency on CPU.
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/8f16d411-c0a5-45ee-9d9b-982d7d29f20e" />
