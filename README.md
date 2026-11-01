@@ -35,7 +35,9 @@ Automatic Number Plate Recognition (ANPR) for embedded vision. The system detect
 Press any key to close windows...
 ```
 
-> Add your screenshots to `docs/` and link them here, e.g. `![demo](docs/demo.png)`.
+![Pipeline result: original car image, detected plate crop and OCR output](docs/images/demo_pipeline_result.png)
+
+*A Serbian plate detected on a test image: the cropped plate (center) and the OCR output in the terminal.*
 
 ---
 
@@ -107,6 +109,17 @@ flowchart LR
 - Raspberry Pi Camera Module (CSI ribbon cable)
 - Stable **5V / 2.5A** power supply (see [Troubleshooting](#-troubleshooting))
 - microSD card (16 GB+), HDMI display or VNC access
+
+<p align="center">
+  <img src="docs/images/hardware_raspberry_pi3.png" alt="Raspberry Pi 3 board" width="48%">
+  <img src="docs/images/hardware_pi_camera.png" alt="Raspberry Pi 3 with camera module connected" width="48%">
+</p>
+
+*Left: Raspberry Pi 3 board. Right: the Pi with the camera module connected through the CSI ribbon cable.*
+
+Remote setup over VNC (installing dependencies on Raspberry Pi OS):
+
+![Raspberry Pi desktop over VNC while installing dependencies](docs/images/raspberry_pi_setup.png)
 
 ---
 
