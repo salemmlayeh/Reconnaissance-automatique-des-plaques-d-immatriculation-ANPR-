@@ -128,8 +128,8 @@ Remote setup over VNC (installing dependencies on Raspberry Pi OS):
 ### On a PC (development / training)
 
 ```bash
-git clone https://github.com/<your-user>/NITC-Automatic-Number-Plate-Recognition-with-Raspberry-Pi.git
-cd NITC-Automatic-Number-Plate-Recognition-with-Raspberry-Pi
+git clone https://github.com/salemmlayeh/Reconnaissance-automatique-des-plaques-d-immatriculation-ANPR-.git
+cd Reconnaissance-automatique-des-plaques-d-immatriculation-ANPR-
 
 python -m venv .venv
 source .venv/bin/activate        # Windows (Git Bash): source .venv/Scripts/activate
