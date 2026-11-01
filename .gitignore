@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+runs/
+datasets/
+plates.csv
+models/*.pt
+.venv/

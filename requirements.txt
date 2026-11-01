@@ -1,0 +1,9 @@
+# Core
+torch
+ultralytics>=8.2      # YOLOv8
+opencv-python         # use opencv-python-headless or `apt install python3-opencv` on the Pi
+numpy
+pytesseract           # needs the Tesseract binary installed separately
+
+# Optional (VLM extension only)
+requests

@@ -1,200 +1,266 @@
-# 🚗 Automatic Number Plate Recognition (ANPR) with YOLOv8, OCR & Vision–Language Models
+# 🚗 ANPR on Raspberry Pi — YOLOv8 + OpenCV + Tesseract
 
-## 📌 Project Overview
+Automatic Number Plate Recognition (ANPR) for embedded vision. The system detects a license plate with **YOLOv8 (PyTorch)**, cleans the crop with **OpenCV**, reads the characters with **Tesseract OCR**, and validates the result with **regular expressions**. It is designed to run on a **Raspberry Pi 3** with a camera module.
 
-This project implements an **Automatic Number Plate Recognition (ANPR)** system designed for embedded vision applications using Python and a Raspberry Pi 3.
-
-The system detects vehicle license plates and extracts their alphanumeric characters through a computer vision pipeline combining **YOLOv8, PyTorch, OpenCV, and Tesseract OCR**. The project evolved from traditional image-processing techniques to deep-learning-based object detection to improve plate localization under challenging visual conditions.
-
-A further experimental extension explores **Vision–Language Models (VLMs)** for contextual image understanding and natural-language question answering, complementing conventional object detection and OCR.
-
-**Key Features**
-- Traditional computer vision techniques for initial plate-localization experiments.
-- CNN-based deep-learning approaches for visual detection.
-- YOLOv8-based license plate detection using PyTorch.
-- Image preprocessing and plate-region extraction with OpenCV.
-- Character recognition using Tesseract OCR.
-- Text validation and filtering using regular expressions.
-- Experimental VLM integration for image understanding and contextual question answering.
-- Embedded deployment considerations for Raspberry Pi 3.
+![Python](https://img.shields.io/badge/Python-3.9%2B-blue) ![PyTorch](https://img.shields.io/badge/PyTorch-YOLOv8-red) ![OpenCV](https://img.shields.io/badge/OpenCV-4.x-green) ![Platform](https://img.shields.io/badge/Platform-Raspberry%20Pi%203-c51a4a)
 
 ---
 
-## ⚙️ System Architecture
+## 📑 Table of Contents
 
-The system follows a modular pipeline, with the VLM component designed as an optional extension.
-
-### 1. Image Acquisition and Preprocessing — OpenCV
-
-Input images or video frames are acquired from a camera or loaded from image files.
-
-Preprocessing operations may include:
-- Image resizing to reduce computational overhead.
-- Grayscale conversion for conventional image-processing operations.
-- Noise reduction and contrast enhancement.
-- Bilateral filtering to preserve important edges while reducing noise.
-- Image normalization before model inference.
-
-The preprocessing strategy depends on the detection method and the conditions of the input images.
-
-### 2. Evolution from Traditional Computer Vision to Deep Learning
-
-The project initially explored conventional computer vision techniques for locating license plates.
-
-**Traditional computer vision approach**
-
-Initial experiments used image-processing operations such as thresholding, edge detection, contour extraction, and geometric filtering to identify candidate plate regions.
-
-These methods provided a baseline but could be sensitive to illumination, background complexity, plate orientation, and image quality.
-
-**CNN-based detection**
-
-Deep-learning-based approaches were subsequently explored to learn visual features directly from image data and improve object localization.
-
-**YOLOv8-based plate detection**
-
-The detection pipeline was then developed using YOLOv8 with PyTorch.
-
-The model predicts bounding boxes corresponding to license plate regions in the input image. The detected regions are extracted as regions of interest (ROIs) for subsequent OCR processing.
-
-This progression provides a practical comparison between handcrafted image-processing methods and learned visual representations.
-
-### 3. License Plate Processing and OCR — OpenCV & Tesseract
-
-After detecting a plate, the system extracts the corresponding image region and prepares it for character recognition.
-
-Processing operations may include:
-- Cropping the detected plate region.
-- Resizing the crop to improve text readability.
-- Correcting orientation or perspective when required.
-- Applying grayscale conversion and thresholding.
-- Using morphological operations to improve text visibility where appropriate.
-
-The processed plate image is passed to **Tesseract OCR**, which extracts the alphanumeric characters.
-
-Regular expressions and format-validation rules can then be applied to filter invalid outputs and reduce recognition errors.
-
-The resulting registration string and available confidence information can be displayed or logged for further analysis.
-
-### 4. Vision–Language Model Extension — Experimental
-
-An additional research direction extends the original ANPR pipeline with a pretrained vision–language model.
-
-Unlike a conventional object detector, which localizes objects, a VLM can relate visual information to natural-language questions and generate contextual descriptions.
-
-The proposed extension explores the following capabilities:
-
-- **Visual question answering:** Answering questions about the contents of an input image.
-- **Contextual image understanding:** Describing visible vehicles and relevant scene elements.
-- **OCR-assisted interpretation:** Providing recognized text as additional context when investigating an image.
-- **Prompt-based experimentation:** Comparing model responses under different questions and contextual instructions.
-
-Example questions include:
-- "Describe the visible vehicle and its surroundings."
-- "What visual information can be identified in this image?"
-- "Based on the image and the OCR output, summarize the available information."
-
-The VLM is intended to complement, rather than replace, YOLOv8 and Tesseract. The detection and OCR modules remain responsible for plate localization and character extraction, while the VLM provides a natural-language interface for interpreting visual content.
-
-**Embedded deployment consideration:** Due to the limited memory and computational resources of the Raspberry Pi 3, initial VLM experiments can run on a separate computer or inference service. Selected images or cropped regions can be sent to the VLM without requiring the entire multimodal model to run on the embedded device.
-
-This extension is intended to investigate the benefits and limitations of combining conventional computer vision, OCR, and vision–language reasoning.
-
-### 5. Output Generation and Validation
-
-The system can produce:
-- Detected license plate regions.
-- OCR-extracted registration text.
-- Text-validation results.
-- Optional VLM-generated descriptions and answers.
-- Intermediate images and outputs for debugging and evaluation.
-
-VLM responses should be treated as generated interpretations, not as a source of verified license plate text. The OCR pipeline remains the primary source for recognized characters.
+1. [Demo](#-demo)
+2. [Features](#-features)
+3. [How it works](#-how-it-works)
+4. [Project structure](#-project-structure)
+5. [Hardware](#-hardware)
+6. [Installation](#-installation)
+7. [Usage](#-usage)
+8. [Training your own detector](#-training-your-own-detector)
+9. [Configuration](#-configuration)
+10. [Raspberry Pi optimization](#-raspberry-pi-optimization)
+11. [Results](#-results)
+12. [Troubleshooting](#-troubleshooting)
+13. [Experimental: VLM extension](#-experimental-vlm-extension)
+14. [Roadmap](#-roadmap)
 
 ---
 
-## 🧠 Technical Challenges and Optimization
+## 🎬 Demo
 
-### Embedded Computing Constraints
+```text
+=== COMPLETE ANPR PIPELINE TEST ===
+1. Original image loaded: (423, 640, 3)
+2. Plate detected: True
+3. License Plate Number: BG224NZ
+Press any key to close windows...
+```
 
-The Raspberry Pi 3 has limited CPU performance and memory compared with desktop systems. The project therefore considers:
-- Reducing image dimensions before inference when appropriate.
-- Avoiding unnecessary image copies and intermediate buffers.
-- Separating detection and OCR into modular processing stages.
-- Measuring CPU inference latency and memory consumption.
-- Evaluating lightweight model configurations for embedded deployment.
-
-### Environmental Robustness
-
-License plate detection and OCR can be affected by:
-- Poor illumination and shadows.
-- Motion blur and low-resolution images.
-- Inclined or partially occluded plates.
-- Background clutter and visually similar objects.
-- Variations in plate appearance and character spacing.
-
-Traditional image processing, deep-learning detection, and OCR provide complementary approaches to addressing these challenges.
-
-### Vision–Language Model Limitations
-
-VLM experiments also require attention to:
-- Inaccurate or unsupported descriptions.
-- Sensitivity to prompt wording.
-- Difficulty interpreting small text in full-scene images.
-- Inference latency and computational cost.
-- The difference between plausible natural-language answers and objectively correct results.
-
-These limitations should be documented during evaluation rather than assuming that a VLM always improves system performance.
+> Add your screenshots to `docs/` and link them here, e.g. `![demo](docs/demo.png)`.
 
 ---
 
-## 📊 Results and Evaluation
+## ✨ Features
 
-The original project achieved a reported character-recognition rate exceeding **92%** on its test data.
+- **YOLOv8** plate detection (PyTorch / Ultralytics), nano model for embedded use
+- **OpenCV** preprocessing: resize, bilateral filter, CLAHE, Otsu + adaptive thresholding, morphology
+- **Tesseract OCR** with a character whitelist; several preprocessing variants are tried and the best one wins
+- **Regex validation** with country-specific patterns (configurable)
+- **Live mode** for the Pi camera (`picamera2`) or any USB webcam, with CSV logging
+- **Modular design**: detection, preprocessing, OCR and pipeline are independent modules
+- *(Optional)* remote VLM client for contextual image questions
 
-The evaluation of the system can be organized into three parts:
+---
+
+## 🧩 How it works
+
+```mermaid
+flowchart LR
+    A[Camera / Image] --> B[YOLOv8<br/>plate detection]
+    B --> C[Crop ROI]
+    C --> D[OpenCV<br/>preprocessing]
+    D --> E[Tesseract OCR]
+    E --> F[Regex validation]
+    F --> G[Plate text + confidence<br/>CSV log / display]
+```
+
+| Stage | Module | What it does |
+|---|---|---|
+| 1. Detection | `anpr/detector.py` | YOLOv8 returns plate bounding boxes sorted by confidence |
+| 2. Preprocessing | `anpr/preprocess.py` | Crop with padding, upscale, denoise, binarize (3 variants) |
+| 3. OCR | `anpr/ocr.py` | Tesseract on each variant; picks the best valid result |
+| 4. Validation | `anpr/ocr.py` | Regex check against `PLATE_PATTERNS` |
+| 5. Orchestration | `anpr/pipeline.py` | Runs everything and draws annotated output |
+
+**Evolution of the project:** traditional CV (thresholding, edges, contours) → CNN-based detection → YOLOv8. The classical approach was sensitive to lighting, background and plate angle, which motivated the move to learned detection.
+
+---
+
+## 📁 Project structure
+
+```text
+.
+├── anpr/
+│   ├── __init__.py
+│   ├── config.py            # all settings in one place
+│   ├── detector.py          # YOLOv8 wrapper
+│   ├── preprocess.py        # OpenCV helpers
+│   ├── ocr.py               # Tesseract + regex validation
+│   ├── pipeline.py          # end-to-end ANPRPipeline
+│   └── vlm_client.py        # optional remote VLM client
+├── scripts/
+│   ├── export_model.py      # export weights to NCNN / ONNX for the Pi
+│   └── vlm_demo.py          # optional VLM demo
+├── models/                  # put best.pt here
+├── data/samples/            # test images
+├── train_yolo.py            # train the detector (PC / Colab)
+├── test_complete_pipeline.py# quick single-image test
+├── run_camera.py            # live ANPR with logging
+├── data.yaml                # YOLO dataset config
+└── requirements.txt
+```
+
+---
+
+## 🔧 Hardware
+
+- Raspberry Pi 3 (Model B / B+)
+- Raspberry Pi Camera Module (CSI ribbon cable)
+- Stable **5V / 2.5A** power supply (see [Troubleshooting](#-troubleshooting))
+- microSD card (16 GB+), HDMI display or VNC access
+
+---
+
+## 📦 Installation
+
+### On a PC (development / training)
+
+```bash
+git clone https://github.com/<your-user>/NITC-Automatic-Number-Plate-Recognition-with-Raspberry-Pi.git
+cd NITC-Automatic-Number-Plate-Recognition-with-Raspberry-Pi
+
+python -m venv .venv
+source .venv/bin/activate        # Windows (Git Bash): source .venv/Scripts/activate
+pip install -r requirements.txt
+```
+
+Install the **Tesseract binary**:
+
+- **Windows:** installer from the UB Mannheim build, then set `TESSERACT_CMD` in `anpr/config.py`
+- **Linux:** `sudo apt install tesseract-ocr`
+- **macOS:** `brew install tesseract`
+
+### On the Raspberry Pi
+
+```bash
+sudo apt update
+sudo apt install -y tesseract-ocr python3-opencv python3-picamera2 python3-venv
+
+python3 -m venv --system-site-packages .venv   # keeps apt's OpenCV and picamera2
+source .venv/bin/activate
+pip install ultralytics pytesseract
+```
+
+> The Pi 3 has only 1 GB RAM. Use a 64-bit Raspberry Pi OS if possible, and increase swap for the install (`sudo nano /etc/dphys-swapfile`).
+
+---
+
+## ▶️ Usage
+
+**Test on one image**
+
+```bash
+python test_complete_pipeline.py data/samples/car.jpg
+python test_complete_pipeline.py data/samples/car.jpg --no-gui   # headless / SSH
+```
+
+**Live camera with logging**
+
+```bash
+python run_camera.py --show --every 5 --log plates.csv
+```
+
+**Use it in your own code**
+
+```python
+import cv2
+from anpr import ANPRPipeline
+
+pipeline = ANPRPipeline()
+for plate in pipeline.process(cv2.imread("car.jpg")):
+    print(plate.text, plate.valid, plate.ocr_conf)
+```
+
+---
+
+## 🏋️ Training your own detector
+
+Train on a PC or Google Colab, **not** on the Pi.
+
+1. Prepare a YOLO-format dataset (`images/train`, `images/val`, `labels/...`) and edit `data.yaml`.
+2. Train:
+   ```bash
+   python train_yolo.py --data data.yaml --epochs 50 --imgsz 640
+   ```
+3. Copy `runs/plates/weights/best.pt` to `models/best.pt`.
+4. (Pi only) export to a faster format:
+   ```bash
+   python scripts/export_model.py --weights models/best.pt --format ncnn --imgsz 320
+   ```
+   Then set `MODEL_PATH = ROOT / "models" / "best_ncnn_model"` in `anpr/config.py`.
+
+---
+
+## ⚙️ Configuration
+
+Everything lives in [`anpr/config.py`](anpr/config.py):
+
+| Setting | Purpose |
+|---|---|
+| `MODEL_PATH` | YOLO weights or exported model folder |
+| `DET_CONF`, `IMG_SIZE`, `DEVICE` | Detection threshold, input size, CPU/GPU |
+| `TESSERACT_CMD` | Path to the Tesseract executable (Windows) |
+| `OCR_WHITELIST` | Allowed OCR characters |
+| `LEFT_TRIM` | Cut a fraction of the plate's left side (country/EU band) |
+| `PLATE_PATTERNS` | Regexes defining a valid plate for your country |
+
+---
+
+## ⚡ Raspberry Pi optimization
+
+- Use **YOLOv8n** with `imgsz=320` and an **NCNN** export
+- Process every Nth frame (`--every 5`) instead of every frame
+- Keep detection and OCR as separate stages; run OCR only on detected crops
+- Measure latency and RAM (`htop`, `time.perf_counter()`) before changing models
+- Run the GUI only when needed (`--show`); headless is faster
+
+---
+
+## 📊 Results
+
+The original project reported a **character recognition rate above 92 %** on its test data.
 
 | Component | Evaluation focus |
 |---|---|
-| Traditional computer vision | Candidate plate localization and sensitivity to image conditions |
-| YOLOv8 + Tesseract OCR | Plate detection, character recognition, and end-to-end recognition performance |
-| Vision–language extension | Answer relevance, contextual understanding, response consistency, and inference latency |
+| Traditional CV | Plate localization, sensitivity to lighting and angle |
+| YOLOv8 + Tesseract | Detection quality, character accuracy, end-to-end accuracy |
+| VLM extension | Answer relevance, consistency, latency (separate from ANPR accuracy) |
 
-The reported recognition rate refers to the original ANPR system and should not be interpreted as a VLM evaluation result.
-
-Future experiments can compare the approaches using consistent test images, clearly defined metrics, and documented experimental conditions.
+Future benchmarks should use the same test images and clearly defined metrics (detection mAP, character accuracy, full-plate accuracy, FPS on the Pi).
 
 ---
 
-## 🛠️ Technologies
+## 🛠️ Troubleshooting
 
-- **Programming:** Python
-- **Deep Learning:** PyTorch, YOLOv8, CNN-based approaches
-- **Computer Vision:** OpenCV
-- **Optical Character Recognition:** Tesseract OCR
-- **Multimodal AI:** Pretrained vision–language models (experimental extension)
-- **Embedded Platform:** Raspberry Pi 3, Raspberry Pi OS / Linux
-- **Image Processing:** Thresholding, filtering, contour analysis, morphological operations
-
----
-
-## 🚀 Future Improvements
-
-- Benchmark traditional computer vision against YOLOv8 using the same evaluation dataset.
-- Optimize detection and OCR latency on Raspberry Pi hardware.
-- Evaluate recognition performance across different lighting and viewing conditions.
-- Integrate and evaluate a pretrained VLM for contextual image understanding.
-- Investigate whether OCR output improves VLM responses when supplied as additional context.
-- Develop a lightweight interface for image-based questions and answers.
-- Measure VLM response quality and latency separately from ANPR accuracy.
+| Problem | Fix |
+|---|---|
+| `can't open file 'test_complete_pipeline.py'` | Run the command from the project root folder |
+| `TesseractNotFoundError` | Install Tesseract and set `TESSERACT_CMD` in `config.py` |
+| Extra character in output (e.g. `BG2224NZ` instead of `BG224NZ`) | The coat-of-arms/emblem on the plate is read as a digit. Increase `LEFT_TRIM` (try `0.08`–`0.12`) and keep a strict regex |
+| ⚠️ *Low voltage warning* on the Pi | Use a proper 5V/2.5A supply and a short, good-quality cable; low voltage causes crashes and slow inference |
+| Very slow inference | Lower `IMG_SIZE`, export to NCNN, process fewer frames |
+| Camera not detected | Check the ribbon cable orientation and run `rpicam-hello` |
 
 ---
 
-## 🎯 Project Objective
+## 🔬 Experimental: VLM extension
 
-The objective is to develop a modular embedded vision system that combines object detection and text recognition, while exploring how vision–language models can extend conventional computer vision with contextual understanding and natural-language interaction.
+A small optional module (`anpr/vlm_client.py`) can send an image and the OCR output to a **vision–language model running on a separate computer** (e.g. Ollama + LLaVA) and ask questions such as *"Describe the visible vehicle."* The Pi 3 is too limited to run a VLM locally.
 
-The project provides a practical foundation for studying the transition from traditional image processing to deep learning and multimodal AI in resource-constrained vision applications.
-<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/8f16d411-c0a5-45ee-9d9b-982d7d29f20e" />
-<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/029b9db8-8344-4672-bbe0-77d6bb6a8d31" />
+VLM answers are generated text, **not verified plate readings** — YOLOv8 and Tesseract remain the source of truth for plate text. Try it with `python scripts/vlm_demo.py data/samples/car.jpg`.
 
+---
+
+## 🗺️ Roadmap
+
+- [ ] Benchmark traditional CV vs. YOLOv8 on the same dataset
+- [ ] Measure latency and memory on the Pi 3
+- [ ] Evaluate across lighting and viewing conditions
+- [ ] Add per-country plate format profiles
+- [ ] Lightweight web interface for live results
+- [ ] Evaluate whether OCR context improves VLM answers
+
+---
+
+## 📄 License
+
+Add your license here (e.g. MIT).
