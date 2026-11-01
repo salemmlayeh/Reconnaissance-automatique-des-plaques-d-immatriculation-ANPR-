@@ -293,10 +293,6 @@ VLM answers are generated text, **not verified plate readings** — YOLOv8 and T
 
 ---
 
-## 📄 License
-
-Released under the [MIT License](LICENSE).
-
 ## 👤 Author
 
 **Salem Mlayeh** — [GitHub](https://github.com/salemmlayeh)
