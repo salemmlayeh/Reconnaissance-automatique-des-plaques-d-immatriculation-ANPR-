@@ -92,14 +92,22 @@ flowchart LR
 ├── scripts/
 │   ├── export_model.py      # export weights to NCNN / ONNX for the Pi
 │   └── vlm_demo.py          # optional VLM demo
-├── models/                  # put best.pt here
-├── data/samples/            # test images
+├── models/                  # trained weights (best.pt) go here
+├── data/
+│   ├── samples/             # extra test images
+│   └── plate_samples/       # cropped plate images for testing OCR alone
+├── legacy/                  # original first-version scripts (kept for reference)
+├── docs/images/             # README pictures
+├── CarPictures/             # 11 sample test images (Serbian and Indian plates)
+├── images/                  # original project images
 ├── train_yolo.py            # train the detector (PC / Colab)
 ├── test_complete_pipeline.py# quick single-image test
 ├── run_camera.py            # live ANPR with logging
 ├── data.yaml                # YOLO dataset config
 └── requirements.txt
 ```
+
+**About `legacy/`:** it contains the original scripts from the first version of the project (`ImageCapture.py`, `PlateExtraction.py`, `OpticalCharacterRecognition.py`, `improved_video_detector.py`). They are kept for reference; the modular `anpr/` package replaces them.
 
 ---
 
@@ -157,13 +165,15 @@ pip install ultralytics pytesseract
 
 ---
 
+> **Model weights:** the trained `best.pt` file is not stored in this repository. Train your own detector (see the *Training your own detector* section below) and place the result in `models/best.pt`.
+
 ## ▶️ Usage
 
-**Test on one image**
+**Test on one image** (the repo includes sample photos in `CarPictures/`)
 
 ```bash
-python test_complete_pipeline.py data/samples/car.jpg
-python test_complete_pipeline.py data/samples/car.jpg --no-gui   # headless / SSH
+python test_complete_pipeline.py CarPictures/001.jpg
+python test_complete_pipeline.py CarPictures/001.jpg --no-gui   # headless / SSH
 ```
 
 **Live camera with logging**
@@ -216,6 +226,15 @@ Everything lives in [`anpr/config.py`](anpr/config.py):
 | `LEFT_TRIM` | Cut a fraction of the plate's left side (country/EU band) |
 | `PLATE_PATTERNS` | Regexes defining a valid plate for your country |
 
+Plate formats validated by default:
+
+| Country | Pattern | Example |
+|---|---|---|
+| Serbia | 2 letters + 3–4 digits + 2 letters | `BG224NZ` |
+| India | 2 letters + 2 digits + 1–3 letters + 4 digits | `MH12DE1433` |
+
+To add another country, append a regex to `PLATE_PATTERNS`.
+
 ---
 
 ## ⚡ Raspberry Pi optimization
@@ -259,7 +278,7 @@ Future benchmarks should use the same test images and clearly defined metrics (d
 
 A small optional module (`anpr/vlm_client.py`) can send an image and the OCR output to a **vision–language model running on a separate computer** (e.g. Ollama + LLaVA) and ask questions such as *"Describe the visible vehicle."* The Pi 3 is too limited to run a VLM locally.
 
-VLM answers are generated text, **not verified plate readings** — YOLOv8 and Tesseract remain the source of truth for plate text. Try it with `python scripts/vlm_demo.py data/samples/car.jpg`.
+VLM answers are generated text, **not verified plate readings** — YOLOv8 and Tesseract remain the source of truth for plate text. Try it with `python scripts/vlm_demo.py CarPictures/001.jpg`.
 
 ---
 
@@ -276,4 +295,8 @@ VLM answers are generated text, **not verified plate readings** — YOLOv8 and T
 
 ## 📄 License
 
-Add your license here (e.g. MIT).
+Released under the [MIT License](LICENSE).
+
+## 👤 Author
+
+**Salem Mlayeh** — [GitHub](https://github.com/salemmlayeh)
